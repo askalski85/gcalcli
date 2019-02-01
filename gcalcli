@@ -193,7 +193,7 @@ try:
     from apiclient.errors import HttpError
     from oauth2client.file import Storage
     from oauth2client.client import OAuth2WebServerFlow
-    from oauth2client.tools import run
+    from oauth2client import tools
 except ImportError as e:
     print("ERROR: Missing module - %s" % e.args[0])
     sys.exit(1)
@@ -654,7 +654,7 @@ class gcalcli:
             credentials = storage.get()
 
             if credentials is None or credentials.invalid:
-                credentials = run(
+                credentials = tools.run_flow(
                     OAuth2WebServerFlow(
                         client_id=self.client_id,
                         client_secret=self.client_secret,
@@ -702,18 +702,18 @@ class gcalcli:
         self.cache = {}
         self.allCals = []
 
-        if self.useCache:
-            # note that we need to use pickle for cache data since we stuff
-            # various non-JSON data in the runtime storage structures
-            try:
-                with open(cacheFile, 'rb') as _cache_:
-                    self.cache = pickle.load(_cache_)
-                    self.allCals = self.cache['allCals']
-                # XXX assuming data is valid, need some verification check here
-                return
-            except IOError:
-                pass
-                # fall through
+        # if self.useCache:
+        #     # note that we need to use pickle for cache data since we stuff
+        #     # various non-JSON data in the runtime storage structures
+        #     try:
+        #         with open(cacheFile, 'rb') as _cache_:
+        #             self.cache = pickle.load(_cache_, protocol=2)
+        #             self.allCals = self.cache['allCals']
+        #         # XXX assuming data is valid, need some verification check here
+        #         return
+        #     except IOError:
+        #         pass
+        #         # fall through
 
         calList = self._RetryWithBackoff(
             self._CalService().calendarList().list())
@@ -737,7 +737,7 @@ class gcalcli:
         if self.useCache:
             self.cache['allCals'] = self.allCals
             with open(cacheFile, 'wb') as _cache_:
-                pickle.dump(self.cache, _cache_)
+                pickle.dump(self.cache, _cache_, protocol=2)
 
     def _ShortenURL(self, url):
         if self.detailUrl != "short":
